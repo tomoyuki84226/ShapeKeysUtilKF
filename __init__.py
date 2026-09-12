@@ -22,7 +22,7 @@ import time
 from bpy.props import *
 
 bl_info = {
-    "name" : "ShapeKeys Util",
+    "name" : "ShapeKeys Util FK",
     "author" : "kisaragiz84@X sleetcat123@Twitter",
     "version" : (1,1,4),
     "blender" : (4, 3, 0),

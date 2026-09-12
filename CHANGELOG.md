@@ -4,6 +4,7 @@
 ### 2026-09-12 V3.0.0
 - fix: Blender4.3以上への対応
 - delete: MizoresCustomExporter と AutoMerge の連携を削除
+- fix: ライセンス更新
 
 ### 2024-09-11 v2.0.2
 - fix: アドオン連携機能の実行時にエラーが出る不具合を修正
