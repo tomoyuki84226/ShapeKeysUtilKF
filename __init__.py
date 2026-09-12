@@ -32,7 +32,6 @@ bl_info = {
 }
 
 # Create Left and Right Shape Keys の自動判定で使うやつ
-ENABLE_LR_TAG="%LR%"
 ENABLE_DUPLICATE_TAG="%D%"
 ENABLE_SORT_TAG="%S%"
 
@@ -130,19 +129,10 @@ translation_dict = {
     "en_US" : {
             "object.shapekeys_util_apply_modifiers_desc" : "Apply all modifiers except for Armature.\nCan use even if has a shape key.\nWarning: It may take a while",
             "object.shapekeys_util_separateobj_desc" : "Separate objects for each shape keys.\nWarning: It may take a while",
-            "object.shapekeys_util_separate_lr_shapekey_desc" : "A selected shape key separate left and right based on object origin.",
-            "object.shapekeys_util_separate_lr_shapekey_all_desc" : "All shape key separate left and right based on object origin.\nSeparation is skipping if a shape key name ends with \"_left\" or \"_right\"",
-            "object.shapekeys_util_separate_lr_shapekey_all_tagdetect_desc" : "See \"Read-me.txt\"\nCan't use if a shape key name ends with \"_left\" or \"_right\"",
-            "object.shapekeys_util_assign_lr_shapekey_tag_desc" : "See \"Read-me.txt\"",
             
             "object.shapekeys_util_apply_modifiers_duplicate" : "Execute the function on the copied object",
             "object.shapekeys_util_separateobj_duplicate" : "Execute the function on the copied object",
             "object.shapekeys_util_separateobj_apply_modifiers" : "Apply modifiers after separation",
-            "object.shapekeys_util_separate_lr_shapekey_enable_sort" : "Result shape keys move to below target shape key",
-            "object.shapekeys_util_assign_lr_shapekey_tag_enable" : "Assign this shape key to separation target",
-            
-            "separate_lr_shapekey_all_enable_sort" : "Result shape keys move to below target shape key.\nWarning: It may take a while",
-            "separate_lr_shapekey_duplicate" : "Execute the function on the copied shape key",
             
             "remove_nonrender" : "A non-render modifier will be removed.",
             "verts_count_difference" : "Warn: vertices count has different:\n[{0}]({2}), [{1}]({3})",
@@ -150,19 +140,10 @@ translation_dict = {
     "ja_JP" : {
             "object.shapekeys_util_apply_modifiers_desc" : "Armature以外の全モディファイアを適用します。\nシェイプキーがあっても使用できます。\n注意：少し時間がかかります",
             "object.shapekeys_util_separateobj_desc" : "シェイプキーをそれぞれ別オブジェクトにします。\n注意：少し時間がかかります",
-            "object.shapekeys_util_separate_lr_shapekey_desc" : "現在のシェイプキーを\nオブジェクト原点基準で左右別々のシェイプキーにします",
-            "object.shapekeys_util_separate_lr_shapekey_all_desc" : "全てのシェイプキーをオブジェクト原点基準で左右別々にします。\n名前の最後が_leftまたは_rightのシェイプキーは分割済みと見なし処理をスキップします",
-            "object.shapekeys_util_separate_lr_shapekey_all_tagdetect_desc" : "詳細はRead-me.txtを参照。\n名前の最後が_leftまたは_rightのシェイプキーには使えません",
-            "object.shapekeys_util_assign_lr_shapekey_tag_desc" : "詳細はRead-me.txtを参照",
-            
+             
             "object.shapekeys_util_apply_modifiers_duplicate" : "対象オブジェクトのコピーに対して処理を行います",
             "object.shapekeys_util_separateobj_duplicate" : "分割前のオブジェクトを残します",
             "object.shapekeys_util_separateobj_apply_modifiers" : "分割後にオブジェクトのモディファイアを適用します",
-            "object.shapekeys_util_separate_lr_shapekey_enable_sort" : "左右分割後のシェイプキーを分割前シェイプキーのすぐ下に移動します",
-            "object.shapekeys_util_assign_lr_shapekey_tag_enable" : "シェイプキーを左右分割処理の対象とします",
-            
-            "separate_lr_shapekey_all_enable_sort" : "左右分割後のシェイプキーを分割前シェイプキーのすぐ下に移動します。\n注意：時間がかかります",
-            "separate_lr_shapekey_duplicate" : "左右分割前のシェイプキーを残します",
             
             "remove_nonrender" : "レンダリング無効化状態のモディファイア\n（モディファイア一覧でカメラアイコンが押されていない）\nを削除します。",
             "verts_count_difference" : "シェイプキーの頂点数が異なっているため処理を実行できませんでした。\nミラーモディファイアの\"結合\"で他より多くの頂点が結合されてしまっている、などの原因が考えられます。\n[{0}]({2}), [{1}]({3})",
@@ -218,10 +199,6 @@ def apply_as_shapekey(modifier):
             print("Apply as shapekey: [{0}]".format(modifier.name))
         except UnicodeDecodeError:
             print("Apply as shapekey")
-
-# シェイプキーをもつオブジェクトのモディファイアを適用
-def apply_modifiers_with_shapekeys_for_automerge_addon(self, source_obj):
-    return apply_modifiers_with_shapekeys(self=self, source_obj=source_obj, duplicate=False, remove_nonrender=True)
 
 def apply_modifiers_with_shapekeys(self, source_obj, duplicate, remove_nonrender=True):
     bpy.ops.object.select_all(action='DESELECT')
@@ -453,131 +430,6 @@ def separate_shapekeys(duplicate, enable_apply_modifiers, remove_nonrender=True)
     print("Finish Separate ShapeKeys: ["+source_obj.name+"]")
     return separated_objects
 
-def separate_lr_shapekey(soruce_shape_key_index, duplicate, enable_sort):
-    obj = get_active_object()
-    source_shape_key = obj.data.shape_keys.key_blocks[soruce_shape_key_index]
-    
-    #print("before: "+source_shape_key.name)
-    source_shape_key.name = source_shape_key.name.replace(ENABLE_LR_TAG, '')
-    source_shape_key.name = source_shape_key.name.replace(ENABLE_DUPLICATE_TAG, '')
-    source_shape_key.name = source_shape_key.name.replace(ENABLE_SORT_TAG, '')
-    result_shape_key_name = source_shape_key.name
-    #print("after: "+source_shape_key.name)
-    
-    point = (0,0,0)
-    
-    # この後で行う選択範囲反転を正常に処理するため、頂点選択だけが有効になるようにしておく
-    #temp_mesh_select_mode = bpy.context.tool_settings.mesh_select_mode
-    bpy.context.tool_settings.mesh_select_mode = (True, False, False)
-    
-    # 左
-    bpy.ops.object.mode_set(mode='OBJECT')
-    bpy.ops.object.shape_key_add(from_mix=False)
-    left_shape_index = obj.active_shape_key_index
-    left_shape = obj.data.shape_keys.key_blocks[left_shape_index]
-    left_shape.name = result_shape_key_name + "_left"
-    select_axis_from_point(point=point, mode='NEGATIVE', axis='X')
-    # 中心位置を含ませないために選択範囲を反転する
-    bpy.ops.mesh.select_all(action='INVERT')
-    update_mesh()
-    if any([v.select for v in obj.data.vertices]):
-        bpy.ops.mesh.blend_from_shape(shape=source_shape_key.name, blend=1, add=False)
-    select_axis_from_point(point=point, mode='ALIGNED', axis='X')
-    update_mesh()
-    if any([v.select for v in obj.data.vertices]):
-        # 中心位置はシェイプを0.5でブレンド。
-        # これをしないと、leftとright両方を同時に使ったときに中心位置の頂点が二倍動いてしまう
-        bpy.ops.mesh.blend_from_shape(shape=source_shape_key.name, blend=0.5, add=False)
-    
-    # 右
-    # 参照する座標の正負が逆なの以外、やってることは左と同じ
-    bpy.ops.object.mode_set(mode='OBJECT')
-    bpy.ops.object.shape_key_add(from_mix=False)
-    right_shape_index = obj.active_shape_key_index
-    right_shape = obj.data.shape_keys.key_blocks[right_shape_index]
-    right_shape.name = result_shape_key_name + "_right"
-    select_axis_from_point(point=point, mode='POSITIVE', axis='X')
-    bpy.ops.mesh.select_all(action='INVERT')
-    update_mesh()
-    if any([v.select for v in obj.data.vertices]):
-        print(any([v.select for v in obj.data.vertices]))
-        bpy.ops.mesh.blend_from_shape(shape=source_shape_key.name, blend=1, add=False)
-    select_axis_from_point(point=point, mode='ALIGNED', axis='X')
-    update_mesh()
-    if any([v.select for v in obj.data.vertices]):
-        bpy.ops.mesh.blend_from_shape(shape=source_shape_key.name, blend=0.5, add=False)
-    
-    bpy.ops.object.mode_set(mode='OBJECT')
-    
-    if enable_sort==True:
-        # 分割したシェイプキーが分割元シェイプキーのすぐ下に来るように移動
-        length=len(obj.data.shape_keys.key_blocks)
-        if length*0.5<=soruce_shape_key_index:
-            #print("Bottom to Top")
-            obj.active_shape_key_index = left_shape_index
-            while soruce_shape_key_index + 1 != obj.active_shape_key_index:
-                bpy.ops.object.shape_key_move(type='UP')
-            obj.active_shape_key_index = right_shape_index
-            while soruce_shape_key_index + 2 != obj.active_shape_key_index:
-                bpy.ops.object.shape_key_move(type='UP')
-        else:
-            # 移動先の位置が上から数えたほうが早いとき
-            #print("Top to Bottom")
-            obj.active_shape_key_index = left_shape_index
-            bpy.ops.object.shape_key_move(type='TOP')
-            while soruce_shape_key_index + 1 != obj.active_shape_key_index:
-                bpy.ops.object.shape_key_move(type='DOWN')
-            obj.active_shape_key_index = right_shape_index
-            bpy.ops.object.shape_key_move(type='TOP')
-            while soruce_shape_key_index + 2 != obj.active_shape_key_index:
-                bpy.ops.object.shape_key_move(type='DOWN')
-    
-    # 左右分割後のシェイプキーに分割元シェイプキーのvalueをコピー
-    left_shape.value = source_shape_key.value
-    right_shape.value = source_shape_key.value
-    source_shape_key.value = 0
-    
-    if duplicate == False:
-        obj.active_shape_key_index = soruce_shape_key_index
-        bpy.ops.object.shape_key_remove()
-    obj.active_shape_key_index = soruce_shape_key_index
-
-def separate_lr_shapekey_all(duplicate, enable_sort, auto_detect):
-    obj = get_active_object()
-    print("Create LR Shapekey All: ["+obj.name+"]")
-    
-    # 頂点を全て表示
-    bpy.ops.object.mode_set(mode='EDIT')
-    bpy.ops.mesh.reveal()
-    bpy.ops.object.mode_set(mode='OBJECT')
-    
-    shape_keys_length=len(obj.data.shape_keys.key_blocks)
-    for i in reversed(range(shape_keys_length)):
-        if i == 0:
-            break
-        shapekey = obj.data.shape_keys.key_blocks[i]
-        
-        
-        # 名前の最後が_leftまたは_rightのシェイプキーは既に左右分割済みと見なし処理スキップ
-        if shapekey.name.endswith("_left") or shapekey.name.endswith("_right"):
-            continue
-        # auto_detectがTrueなら、名前に"%LR%"を含むときだけ左右分割処理を行う
-        if auto_detect==False or (auto_detect==True and shapekey.name.find(ENABLE_LR_TAG)!=-1):
-            #print("Shapekey: ["+shapekey.name+"] ["+str(shape_keys_length-1-i)+" / "+str(shape_keys_length)+"]")
-            print("Shapekey: ["+shapekey.name+"]")
-            dup_temp=duplicate
-            sort_temp=enable_sort
-            if auto_detect==True:
-                # 名前に"%DUP%"を含むなら強制的に複製ON
-                if shapekey.name.find(ENABLE_DUPLICATE_TAG)!=-1:
-                    dup_temp=True
-                # 名前に"%SORT%"を含むなら強制的にソートON
-                if shapekey.name.find(ENABLE_SORT_TAG)!=-1:
-                    sort_temp=True
-            separate_lr_shapekey(soruce_shape_key_index=i, duplicate=dup_temp, enable_sort=sort_temp)
-    
-    print("Finish Create LR Shapekey All: ["+obj.name+"]")
-
 # 指定座標を基準にSide of Active
 def select_axis_from_point(point=(0,0,0), mode='POSITIVE', axis='X', threshold=0.0001):
     obj = get_active_object()
@@ -685,140 +537,7 @@ class OBJECT_OT_specials_shapekeys_util_separateobj(bpy.types.Operator):
         
         return {'FINISHED'}
 
-class OBJECT_OT_specials_shapekeys_util_separate_lr_shapekey(bpy.types.Operator):
-    bl_idname = "object.shapekeys_util_separate_lr_shapekey"
-    bl_label = "Separate Shape Key Left and Right"
-    bl_description = get_tooltips_text(bl_idname+"_desc")
-    bl_options = {'REGISTER', 'UNDO'}
-    
-    duplicate: BoolProperty(name="Duplicate", default=False, description=get_tooltips_text("separate_lr_shapekey_duplicate"))
-    enable_sort: BoolProperty(name="Enable Sort", default=True, description=get_tooltips_text(bl_idname+"_enable_sort"))
-    
-    @classmethod
-    def poll(cls, context):
-        obj = context.object
-        return (obj is not None and obj.type == 'MESH' and obj.data.shape_keys!=None and len(obj.data.shape_keys.key_blocks)!=0)
-    
-    def execute(self, context):
-        obj = context.object
-        set_active_object(obj)
-        
-        # 頂点を全て表示
-        bpy.ops.object.mode_set(mode='EDIT')
-        bpy.ops.mesh.reveal()
-        bpy.ops.object.mode_set(mode='OBJECT')
-        
-        separate_lr_shapekey(soruce_shape_key_index=obj.active_shape_key_index, duplicate=self.duplicate, enable_sort=self.enable_sort)
-        return {'FINISHED'}
 
-class OBJECT_OT_specials_shapekeys_util_separate_lr_shapekey_all(bpy.types.Operator):
-    bl_idname = "object.shapekeys_util_separate_lr_shapekey_all"
-    bl_label = "Separate All Shape Key Left and Right"
-    bl_description = get_tooltips_text(bl_idname+"_desc")
-    bl_options = {'REGISTER', 'UNDO'}
-    
-    duplicate: BoolProperty(name="Duplicate", default=False, description=get_tooltips_text("separate_lr_shapekey_duplicate"))
-    enable_sort: BoolProperty(name="Enable Sort", default=False, description=get_tooltips_text("separate_lr_shapekey_all_enable_sort"))
-    
-    @classmethod
-    def poll(cls, context):
-        obj = context.object
-        return (obj is not None and obj.type == 'MESH' and obj.data.shape_keys!=None and len(obj.data.shape_keys.key_blocks)!=0)
-    
-    def execute(self, context):
-        obj = context.object
-        set_active_object(obj)
-        separate_lr_shapekey_all(duplicate=self.duplicate, enable_sort=self.enable_sort, auto_detect=False)
-        return {'FINISHED'}
-
-class OBJECT_OT_specials_shapekeys_util_separate_lr_shapekey_all_tagdetect(bpy.types.Operator):
-    bl_idname = "object.shapekeys_util_separate_lr_shapekey_all_tagdetect"
-    bl_label = "(Tag) Separate All Shape Key Left and Right"
-    bl_description = get_tooltips_text(bl_idname+"_desc")
-    bl_options = {'REGISTER', 'UNDO'}
-    
-    @classmethod
-    def poll(cls, context):
-        obj = context.object
-        return (obj is not None and obj.type == 'MESH' and obj.data.shape_keys!=None and len(obj.data.shape_keys.key_blocks)!=0)
-    
-    def execute(self, context):
-        obj = context.object
-        set_active_object(obj)
-        separate_lr_shapekey_all(duplicate=False, enable_sort=False, auto_detect=True)
-        return {'FINISHED'}
-
-class OBJECT_OT_specials_shapekeys_util_assign_lr_shapekey_tag(bpy.types.Operator):
-    bl_idname = "object.shapekeys_util_assign_lr_shapekey_tag"
-    bl_label = "Assign Tag"
-    bl_description = get_tooltips_text(bl_idname+"_desc")
-    bl_options = {'REGISTER', 'UNDO'}
-    
-    enable: BoolProperty(name="Enable", description=get_tooltips_text(bl_idname+"_enable"))
-    duplicate: BoolProperty(name="Duplicate", description=get_tooltips_text("separate_lr_shapekey_duplicate"))
-    enable_sort: BoolProperty(name="Enable Sort", description=get_tooltips_text("separate_lr_shapekey_all_enable_sort"))
-    
-    target_name=""
-    target_shape_name=""
-    
-    @classmethod
-    def poll(cls, context):
-        obj = context.object
-        
-        b = (obj is not None and obj.type == 'MESH' and obj.data.shape_keys!=None and obj.active_shape_key_index!=0)
-        if b==True:
-            shapekey = obj.data.shape_keys.key_blocks[obj.active_shape_key_index]
-            # 名前の最後が_leftまたは_rightのシェイプキーには使えないように
-            if shapekey.name.endswith("_left") or shapekey.name.endswith("_right"):
-                b=False
-        
-        return b
-    
-    def invoke(self, context, event):
-        self.obj=context.object
-        obj=self.obj
-        shapekey = obj.data.shape_keys.key_blocks[obj.active_shape_key_index]
-        self.target_name=obj.name
-        self.target_shape_name=shapekey.name
-        
-        self.enable = shapekey.name.find(ENABLE_LR_TAG)!=-1
-        self.duplicate = shapekey.name.find(ENABLE_DUPLICATE_TAG)!=-1
-        self.enable_sort = shapekey.name.find(ENABLE_SORT_TAG)!=-1
-        return self.execute(context)
-    
-    def draw(self, context):
-        layout = self.layout
-        layout.label(text="Target: "+self.target_name)
-        layout.label(text="Shape: "+self.target_shape_name)
-        layout.prop(self, "enable")
-        col = layout.column()
-        col.enabled = self.enable
-        col.prop(self, "duplicate")
-        col.prop(self, "enable_sort")
-    
-    def execute(self, context):
-        obj = context.object
-        shapekey = obj.data.shape_keys.key_blocks[obj.active_shape_key_index]
-        
-        if self.enable==True:
-            if shapekey.name.find(ENABLE_LR_TAG)==-1:
-                shapekey.name+=ENABLE_LR_TAG
-        else:
-            shapekey.name=shapekey.name.replace(ENABLE_LR_TAG, '')
-        
-        if self.enable==True and self.duplicate==True:
-            if shapekey.name.find(ENABLE_DUPLICATE_TAG)==-1:
-                shapekey.name+=ENABLE_DUPLICATE_TAG
-        else:
-            shapekey.name=shapekey.name.replace(ENABLE_DUPLICATE_TAG, '')
-        
-        if self.enable==True and self.enable_sort==True:
-            if shapekey.name.find(ENABLE_SORT_TAG)==-1:
-                shapekey.name+=ENABLE_SORT_TAG
-        else:
-            shapekey.name=shapekey.name.replace(ENABLE_SORT_TAG, '')
-        
-        return {'FINISHED'}
 
 ### Mesh Operator ###
 class MESH_OT_specials_shapekeys_util_sideofactive_point(bpy.types.Operator):
@@ -892,11 +611,6 @@ class VIEW3D_MT_object_specials_shapekeys_util(bpy.types.Menu):
         layout = self.layout
         layout.operator(OBJECT_OT_specials_shapekeys_util_apply_modifiers.bl_idname)
         layout.operator(OBJECT_OT_specials_shapekeys_util_separateobj.bl_idname)
-        layout.separator()
-        layout.operator(OBJECT_OT_specials_shapekeys_util_separate_lr_shapekey.bl_idname)
-        layout.operator(OBJECT_OT_specials_shapekeys_util_separate_lr_shapekey_all.bl_idname)
-        layout.operator(OBJECT_OT_specials_shapekeys_util_separate_lr_shapekey_all_tagdetect.bl_idname)
-        layout.operator(OBJECT_OT_specials_shapekeys_util_assign_lr_shapekey_tag.bl_idname)
         #layout.operator(OBJECT_OT_specials_shapekeys_util_wip.bl_idname)
 
 ### Init ###
@@ -906,10 +620,6 @@ classes = [
     
     OBJECT_OT_specials_shapekeys_util_apply_modifiers,
     OBJECT_OT_specials_shapekeys_util_separateobj,
-    OBJECT_OT_specials_shapekeys_util_separate_lr_shapekey,
-    OBJECT_OT_specials_shapekeys_util_separate_lr_shapekey_all,
-    OBJECT_OT_specials_shapekeys_util_separate_lr_shapekey_all_tagdetect,
-    OBJECT_OT_specials_shapekeys_util_assign_lr_shapekey_tag,
     #OBJECT_OT_specials_shapekeys_util_wip,
     
     MESH_OT_specials_shapekeys_util_sideofactive_point,

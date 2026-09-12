@@ -17,7 +17,6 @@
 # ##### END GPL LICENSE BLOCK #####
 
 # Create Left and Right Shape Keys の自動判定で使うやつ
-ENABLE_LR_TAG = "%LR%"
 ENABLE_DUPLICATE_TAG = "%D%"
 ENABLE_SORT_TAG = "%S%"
 
