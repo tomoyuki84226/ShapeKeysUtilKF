@@ -1,6 +1,7 @@
 # ShapeKeysUtilKF
 ## はじめに
 これはシェイプキーの存在するオブジェクトでも、モディファイアを適用することが出来るアドオンです。
+
 [猫柳みぞれ](https://twitter.com/sleetcat123)さんが作成されていたものをもとに、Blender4.3以上に対応しました。
 
 [ダウンロードはこちらから](https://github.com/tomoyuki84226/ShapeKeysUtilKF/releases )  
@@ -94,7 +95,7 @@ Mirrorモディファイアが原因だと思われる場合、以下の対処�
     - Point
 　　基準となる座標です。
 
-## ◇Addon Preference（アドオン導入画面で変更可能な設定）
+## Addon Preference（アドオン導入画面で変更可能な設定）
 - Wait Interval
 一部処理に挟まれる待機処理の間隔を設定します。  
 数値を大きくすると、シェイプキーが多い場合の処理時間が短くなりますが、代わりにCPU負荷が増します。  
@@ -112,4 +113,5 @@ Mirrorモディファイアが原因だと思われる場合、以下の対処�
 
 以下の連絡先にご要望や不具合発生時の状況を送っていただけると修正の手助けになります。
 
-[如月ふむ](htts://x.com/kisaragiz84)
+[如月ふむ@X](htts://x.com/kisaragiz84)
+
