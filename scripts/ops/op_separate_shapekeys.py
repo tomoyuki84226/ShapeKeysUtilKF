@@ -52,28 +52,51 @@ class OBJECT_OT_specials_shapekeys_util_shapekeys_to_objects(bpy.types.Operator)
 
     @classmethod
     def poll(cls, context):
-        obj = context.object
-        return obj.type == 'MESH'
+        return any(
+            obj.type == 'MESH'
+            and obj.data.shape_keys is not None
+            and len(obj.data.shape_keys.key_blocks) > 0
+            for obj in context.selected_objects
+        )
 
     def execute(self, context):
         try:
-            source_obj = context.object
+            original_active = context.view_layer.objects.active
+            original_selection = list(context.selected_objects)
+            targets = [
+                obj for obj in original_selection
+                if obj.type == 'MESH'
+                and obj.data.shape_keys is not None
+                and len(obj.data.shape_keys.key_blocks) > 0
+            ]
 
-            # 実行する必要がなければキャンセル
-            if source_obj.data.shape_keys is None or len(source_obj.data.shape_keys.key_blocks) == 0:
-                return {'CANCELLED'}
+            if not self.keep_original:
+                func_object_utils.deselect_all_objects()
+                func_object_utils.select_objects(targets, True)
+                func_object_utils.set_active_object(
+                    original_active if original_active in targets else targets[0]
+                )
+                bpy.ops.object.make_single_user(
+                    type='SELECTED_OBJECTS', object=True, obdata=True,
+                    material=False, animation=False
+                )
+
+            for source_obj in targets:
+                func_object_utils.deselect_all_objects()
+                func_object_utils.select_object(source_obj, True)
+                func_object_utils.set_active_object(source_obj)
+
+                # シェイプキーをそれぞれ別オブジェクトにする
+                func_separate_shapekeys.separate_shapekeys(
+                    duplicate=self.keep_original,
+                    enable_apply_modifiers=self.apply_modifiers,
+                    remove_nonrender=self.remove_nonrender,
+                    keep_original_shapekeys=self.keep_original_shapekeys
+                )
 
             func_object_utils.deselect_all_objects()
-            func_object_utils.select_object(source_obj, True)
-            func_object_utils.set_active_object(source_obj)
-            
-            # シェイプキーをそれぞれ別オブジェクトにする
-            func_separate_shapekeys.separate_shapekeys(
-                duplicate=self.keep_original,
-                enable_apply_modifiers=self.apply_modifiers,
-                remove_nonrender=self.remove_nonrender,
-                keep_original_shapekeys=self.keep_original_shapekeys
-            )
+            func_object_utils.select_objects(original_selection, True)
+            func_object_utils.set_active_object(original_active)
 
             return {'FINISHED'}
         except Exception as e:

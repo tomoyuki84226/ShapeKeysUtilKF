@@ -33,6 +33,7 @@ Please wait for it to finish.
 `Right-click in Object Mode → ShapeKeys Util → Apply Modifiers`
 
 Applies all modifiers except Armature modifiers.
+All selected mesh objects can be processed in one operation.
 
 - Prefixing a modifier's name with `%A%` allows an Armature modifier to be applied as well.
 
@@ -76,6 +77,7 @@ If you suspect that a Mirror modifier is causing the issue, try the following:
 `Right-click in Object Mode → ShapeKeys Util → Separate Objects`
 
 Separates each shape key into its own object.  
+All selected mesh objects can be processed in one operation; objects without shape keys are skipped.
 **Note:** This operation may take some time.
 
 - Settings

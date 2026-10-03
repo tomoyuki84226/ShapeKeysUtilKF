@@ -31,29 +31,42 @@ class OBJECT_OT_mizore_shapekeys_util_apply_selected_modifiers(bpy.types.Operato
 
     @classmethod
     def poll(cls, context):
-        obj = context.object
-        return (
-            obj
-            and not obj.hide_viewport 
-            and not obj.hide_get() 
-            and obj.type == 'MESH' 
-            and obj.modifiers 
+        return any(
+            not obj.hide_viewport
+            and not obj.hide_get()
+            and obj.type == 'MESH'
+            and obj.modifiers
             and obj.modifiers.active
+            for obj in context.selected_objects
             )
 
     def execute(self, context):
         try:
-            original_obj = context.object
+            original_active = context.view_layer.objects.active
+            original_selection = list(context.selected_objects)
+            targets = [
+                obj for obj in original_selection
+                if not obj.hide_viewport
+                and not obj.hide_get()
+                and obj.type == 'MESH'
+                and obj.modifiers
+                and obj.modifiers.active
+            ]
 
-            temp_selected_objects = bpy.context.selected_objects
             func_object_utils.deselect_all_objects()
-            func_object_utils.select_object(original_obj, True)
+            func_object_utils.select_objects(targets, True)
+            func_object_utils.set_active_object(
+                original_active if original_active in targets else targets[0]
+            )
             # リンクされたオブジェクトのモディファイアは適用できないので予めリンクを解除しておく
             bpy.ops.object.make_single_user(type='SELECTED_OBJECTS', object=True, obdata=True, material=False, animation=False)
 
-            func_apply_selected_modifier.apply_selected_modifier(original_obj)
+            for obj in targets:
+                func_apply_selected_modifier.apply_selected_modifier(obj)
             # 元の選択状態に戻す
-            func_object_utils.select_objects(temp_selected_objects, True)
+            func_object_utils.deselect_all_objects()
+            func_object_utils.select_objects(original_selection, True)
+            func_object_utils.set_active_object(original_active)
             return {'FINISHED'}
         except Exception as e:
             bpy.ops.ed.undo_push(message = "Restore point")

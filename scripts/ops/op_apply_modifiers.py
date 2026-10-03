@@ -40,13 +40,15 @@ class OBJECT_OT_specials_shapekeys_util_apply_modifiers(bpy.types.Operator):
         description="A non-render modifier will be removed."
     )
 
+    @classmethod
+    def poll(cls, context):
+        return any(obj.type == 'MESH' for obj in context.selected_objects)
+
     def execute(self, context):
         try:
             active = func_object_utils.get_active_object()
-            selected_objects = bpy.context.selected_objects
+            selected_objects = list(context.selected_objects)
             targets = [d for d in selected_objects if d.type == 'MESH']
-            if active.type == 'MESH' and active not in targets:
-                targets.append(active)
 
             func_object_utils.deselect_all_objects()
             func_object_utils.select_objects(targets, True)
@@ -56,6 +58,7 @@ class OBJECT_OT_specials_shapekeys_util_apply_modifiers(bpy.types.Operator):
             for obj in targets:
                 func_object_utils.set_active_object(obj)
                 func_apply_modifiers_with_shapekeys.apply_modifiers_with_shapekeys(self, self.duplicate, self.remove_nonrender)
+            func_object_utils.deselect_all_objects()
             func_object_utils.select_objects(selected_objects, True)
             func_object_utils.set_active_object(active)
             return {'FINISHED'}

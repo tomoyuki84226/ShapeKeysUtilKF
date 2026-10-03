@@ -1,6 +1,10 @@
 
 ## ◆更新履歴
 
+### 2026-10-03 V3.0.1
+- add: 選択した複数のメッシュを Apply Modifiers / Separate Objects で一括処理できるようにした
+- fix: 一括処理後に元の選択状態とアクティブオブジェクトを復元するようにした
+
 ### 2026-09-12 V3.0.0
 - fix: Blender4.3以上への対応
 - delete: MizoresCustomExporter と AutoMerge の連携を削除

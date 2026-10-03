@@ -24,7 +24,7 @@ from bpy.props import *
 bl_info = {
     "name" : "ShapeKeys Util KF",
     "author" : "kisaragiz84@X sleetcat123@Twitter",
-    "version" : (1,1,4),
+    "version" : (3,0,1),
     "blender" : (4, 3, 0),
     "location": "",
     "description" : "",
@@ -497,14 +497,37 @@ class OBJECT_OT_specials_shapekeys_util_apply_modifiers(bpy.types.Operator):
     
     @classmethod
     def poll(cls, context):
-        return context.object is not None and context.object.type == 'MESH'
+        return any(obj.type == 'MESH' for obj in context.selected_objects)
     
     def execute(self, context):
-        b = apply_modifiers_with_shapekeys(self, context.object, self.duplicate, self.remove_nonrender)
-        if b==True:
-            return {'FINISHED'}
-        else:
-            return {'CANCELLED'}
+        original_active = context.view_layer.objects.active
+        original_selection = list(context.selected_objects)
+        targets = [obj for obj in original_selection if obj.type == 'MESH']
+
+        # Linked object data cannot have modifiers applied. Make every target
+        # single-user before starting the batch.
+        bpy.ops.object.select_all(action='DESELECT')
+        select_objects(targets, True)
+        set_active_object(original_active if original_active in targets else targets[0])
+        bpy.ops.object.make_single_user(
+            type='SELECTED_OBJECTS',
+            object=True,
+            obdata=True,
+            material=False,
+            animation=False,
+        )
+
+        success = True
+        for obj in targets:
+            if not apply_modifiers_with_shapekeys(
+                    self, obj, self.duplicate, self.remove_nonrender):
+                success = False
+                break
+
+        bpy.ops.object.select_all(action='DESELECT')
+        select_objects(original_selection, True)
+        set_active_object(original_active)
+        return {'FINISHED'} if success else {'CANCELLED'}
 
 class OBJECT_OT_specials_shapekeys_util_separateobj(bpy.types.Operator):
     bl_idname = "object.shapekeys_util_separateobj"
@@ -518,23 +541,50 @@ class OBJECT_OT_specials_shapekeys_util_separateobj(bpy.types.Operator):
     
     @classmethod
     def poll(cls, context):
-        obj = context.object
-        return obj is not None and obj.type == 'MESH'
+        return any(
+            obj.type == 'MESH'
+            and obj.data.shape_keys is not None
+            and len(obj.data.shape_keys.key_blocks) > 0
+            for obj in context.selected_objects
+        )
     
     def execute(self, context):
-        source_obj = context.object
-        
-        # 実行する必要がなければキャンセル
-        if source_obj.data.shape_keys==None or len(source_obj.data.shape_keys.key_blocks)==0:
-            return {'CANCELLED'}
-        
+        original_active = context.view_layer.objects.active
+        original_selection = list(context.selected_objects)
+        targets = [
+            obj for obj in original_selection
+            if obj.type == 'MESH'
+            and obj.data.shape_keys is not None
+            and len(obj.data.shape_keys.key_blocks) > 0
+        ]
+
+        # When the originals are modified, detach shared object/mesh data so
+        # an unselected linked object is not changed as a side effect.
+        if not self.duplicate:
+            bpy.ops.object.select_all(action='DESELECT')
+            select_objects(targets, True)
+            set_active_object(original_active if original_active in targets else targets[0])
+            bpy.ops.object.make_single_user(
+                type='SELECTED_OBJECTS',
+                object=True,
+                obdata=True,
+                material=False,
+                animation=False,
+            )
+
+        for source_obj in targets:
+            bpy.ops.object.select_all(action='DESELECT')
+            select_object(source_obj, True)
+            set_active_object(source_obj)
+            separate_shapekeys(
+                self.duplicate,
+                self.apply_modifiers,
+                self.remove_nonrender,
+            )
+
         bpy.ops.object.select_all(action='DESELECT')
-        select_object(source_obj, True)
-        set_active_object(source_obj)
-        
-        # シェイプキーをそれぞれ別オブジェクトにする
-        separate_shapekeys(self.duplicate, self.apply_modifiers, self.remove_nonrender)
-        
+        select_objects(original_selection, True)
+        set_active_object(original_active)
         return {'FINISHED'}
 
 
