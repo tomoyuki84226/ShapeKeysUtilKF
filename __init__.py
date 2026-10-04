@@ -20,11 +20,12 @@ import bpy
 import bmesh
 import time
 from bpy.props import *
+from .scripts.ops import op_export_fbx
 
 bl_info = {
     "name" : "ShapeKeys Util KF",
     "author" : "kisaragiz84@X sleetcat123@Twitter",
-    "version" : (3,0,1),
+    "version" : (3,1,0),
     "blender" : (4, 3, 0),
     "location": "",
     "description" : "",
@@ -661,6 +662,8 @@ class VIEW3D_MT_object_specials_shapekeys_util(bpy.types.Menu):
         layout = self.layout
         layout.operator(OBJECT_OT_specials_shapekeys_util_apply_modifiers.bl_idname)
         layout.operator(OBJECT_OT_specials_shapekeys_util_separateobj.bl_idname)
+        layout.separator()
+        layout.operator(op_export_fbx.EXPORT_SCENE_OT_shapekeys_util_fbx.bl_idname)
         #layout.operator(OBJECT_OT_specials_shapekeys_util_wip.bl_idname)
 
 ### Init ###
@@ -680,6 +683,7 @@ classes = [
 def register():
     for cls in classes:
         bpy.utils.register_class(cls)
+    op_export_fbx.register()
     
     if is_v2_80_later() == True:
         bpy.types.VIEW3D_MT_object_context_menu.append(INFO_MT_object_specials_shapekeys_util_menu)
@@ -689,6 +693,7 @@ def register():
         bpy.types.VIEW3D_MT_edit_mesh_specials.append(INFO_MT_edit_mesh_specials_shapekeys_util_menu)
 
 def unregister():
+    op_export_fbx.unregister()
     for cls in classes:
         bpy.utils.unregister_class(cls)
     

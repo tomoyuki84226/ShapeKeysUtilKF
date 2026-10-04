@@ -28,6 +28,16 @@ Please wait for it to finish.
 
 ## Features
 
+### FBX with Evaluated Shape Keys
+
+Run it from `File > Export > FBX with Evaluated Shape Keys (.fbx)` or from `Object Mode > Right Click > ShapeKeys Util > FBX with Evaluated Shape Keys`.
+
+Like Blender's standard FBX exporter, this exports every object in the current View Layer by default. Enable `Selected Objects` to limit it to the selection. Each mesh shape key is temporarily evaluated after render-enabled modifiers, without changing the original object. Armature modifiers and modifiers whose names start with `%KEEP%` are not applied.
+
+The export screen uses the same panels and settings as Blender's standard FBX exporter. Batch Mode is currently unsupported.
+
+The evaluated Basis and every shape key must have the same vertex count. Modifiers such as Boolean or merged Mirror may cause the export to stop with an error.
+
 ### Apply Modifiers
 
 `Right-click in Object Mode → ShapeKeys Util → Apply Modifiers`

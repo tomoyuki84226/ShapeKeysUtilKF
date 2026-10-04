@@ -4,7 +4,7 @@ $projectRoot = $PSScriptRoot
 $packageName = 'ShapeKeysUtilKF'
 $stageRoot = Join-Path $projectRoot 'build_package'
 $addonRoot = Join-Path $stageRoot $packageName
-$outputPath = Join-Path $projectRoot "$packageName-3.0.1.zip"
+$outputPath = Join-Path $projectRoot "$packageName-3.1.0.zip"
 
 if (Test-Path -LiteralPath $stageRoot) {
     Remove-Item -LiteralPath $stageRoot -Recurse -Force

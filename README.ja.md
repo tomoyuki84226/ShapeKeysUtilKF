@@ -22,6 +22,16 @@
 （使用前に Window → Toggle System Console でログ画面を表示しておくと進行状況が確認できます）  
 
 ## 機能説明
+### FBX with Evaluated Shape Keys
+`ファイル → エクスポート → FBX with Evaluated Shape Keys (.fbx)`
+または `オブジェクトモードで右クリック → ShapeKeys Util → FBX with Evaluated Shape Keys` から実行します。
+
+標準FBXと同様、現在のView Layerにあるすべてのオブジェクトを既定で出力します。`Selected Objects`を有効にした場合だけ選択オブジェクトに限定します。メッシュの各シェイプキーをモディファイア適用後の形状として一時的に評価し、元のオブジェクトを変更せずに標準FBXエクスポーターへ渡します。Armatureモディファイアと、名前が `%KEEP%` で始まるモディファイアは適用しません。
+
+出力画面は標準FBXと同じパネルと設定を使用します。現時点ではBatch Modeのみ非対応です。
+
+Basisと各シェイプキーで、評価後の頂点数が同じである必要があります。BooleanやMirrorの結合などで頂点数が変わる場合はエラーになります。
+
 ### Apply Modifiers
 `オブジェクトモードで右クリック → ShapeKeys Util → Apply Modifiers`  
 
