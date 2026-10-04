@@ -122,6 +122,14 @@ It runs **Side of Active** using the specified coordinates as the reference poin
   - **Point**  
     The coordinates used as the reference point.
 
+### Blend Active Shape Key to All
+
+`Right-click in Edit Mode → ShapeKeys Util → Blend Active Shape Key to All`
+
+For the vertices selected in Edit Mode, this blends the active shape key into every shape key except Basis. The active shape key itself is not changed.
+
+After running it, the **Adjust Last Operation** panel provides the same `Blend` value and `Add` option as Blender's standard **Blend From Shape** command.
+
 ## Add-on Preferences
 
 These settings can be changed in the add-on installation/preferences screen.

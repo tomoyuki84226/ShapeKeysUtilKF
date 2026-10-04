@@ -17,7 +17,7 @@
 # ##### END GPL LICENSE BLOCK #####
 
 import bpy
-from ..ops import op_sideofactive_point
+from ..ops import op_blend_active_shapekey_to_all, op_sideofactive_point
 
 
 # エディットモード　Special → ShapeKeys Util を登録する
@@ -31,7 +31,12 @@ class VIEW3D_MT_edit_mesh_specials_shapekeys_util(bpy.types.Menu):
     bl_idname = "INFO_MT_edit_mesh_specials_shapekeys_util_menu"
 
     def draw(self, context):
-        self.layout.operator(op_sideofactive_point.MESH_OT_specials_shapekeys_util_sideofactive_point.bl_idname)
+        layout = self.layout
+        layout.operator(
+            op_blend_active_shapekey_to_all.MESH_OT_shapekeys_util_blend_active_to_all.bl_idname
+        )
+        layout.separator()
+        layout.operator(op_sideofactive_point.MESH_OT_specials_shapekeys_util_sideofactive_point.bl_idname)
 
 
 def register():

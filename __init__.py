@@ -20,7 +20,7 @@ import bpy
 import bmesh
 import time
 from bpy.props import *
-from .scripts.ops import op_export_fbx
+from .scripts.ops import op_blend_active_shapekey_to_all, op_export_fbx
 
 bl_info = {
     "name" : "ShapeKeys Util KF",
@@ -651,7 +651,12 @@ class VIEW3D_MT_edit_mesh_specials_shapekeys_util(bpy.types.Menu):
     bl_idname = "INFO_MT_edit_mesh_specials_shapekeys_util_menu"
     
     def draw(self, context):
-        self.layout.operator(MESH_OT_specials_shapekeys_util_sideofactive_point.bl_idname)
+        layout = self.layout
+        layout.operator(
+            op_blend_active_shapekey_to_all.MESH_OT_shapekeys_util_blend_active_to_all.bl_idname
+        )
+        layout.separator()
+        layout.operator(MESH_OT_specials_shapekeys_util_sideofactive_point.bl_idname)
 
 # オブジェクトモード　Special → ShapeKeys Util にコマンドを登録するクラス
 class VIEW3D_MT_object_specials_shapekeys_util(bpy.types.Menu):
@@ -681,6 +686,7 @@ classes = [
 ]
 
 def register():
+    op_blend_active_shapekey_to_all.register()
     for cls in classes:
         bpy.utils.register_class(cls)
     op_export_fbx.register()
@@ -696,6 +702,7 @@ def unregister():
     op_export_fbx.unregister()
     for cls in classes:
         bpy.utils.unregister_class(cls)
+    op_blend_active_shapekey_to_all.unregister()
     
     if is_v2_80_later() == True:
         bpy.types.VIEW3D_MT_object_context_menu.remove(INFO_MT_object_specials_shapekeys_util_menu)
