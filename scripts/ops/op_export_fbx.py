@@ -70,6 +70,14 @@ class EXPORT_SCENE_OT_shapekeys_util_fbx(bpy.types.Operator, ExportHelper):
     )
     use_space_transform: BoolProperty(name="Use Space Transform", default=True)
     bake_space_transform: BoolProperty(name="Apply Transform", default=False)
+    merge_parented_meshes: BoolProperty(
+        name="子のメッシュを親と統合",
+        description=(
+            "出力対象の子メッシュを、最上位にある出力対象のメッシュ親へ"
+            "一時的に統合します"
+        ),
+        default=False,
+    )
     axis_forward: EnumProperty(
         name="Forward",
         items=tuple((axis, f"{axis} Forward", "") for axis in _AXES),
@@ -204,6 +212,7 @@ class EXPORT_SCENE_OT_shapekeys_util_fbx(bpy.types.Operator, ExportHelper):
         export_main(layout, self, is_file_browser)
         export_panel_include(layout, self, is_file_browser)
         export_panel_transform(layout, self)
+        layout.prop(self, "merge_parented_meshes")
         export_panel_geometry(layout, self)
         export_panel_armature(layout, self)
         export_panel_animation(layout, self)
@@ -239,7 +248,12 @@ class EXPORT_SCENE_OT_shapekeys_util_fbx(bpy.types.Operator, ExportHelper):
         ]
         keywords = self.as_keywords(ignore=("filter_glob", "check_existing"))
         try:
-            func_export_fbx_wrapper.export_with_temporary_meshes(context, mesh_objects, keywords)
+            func_export_fbx_wrapper.export_with_temporary_meshes(
+                context,
+                mesh_objects,
+                keywords,
+                export_objects=source_objects,
+            )
         except Exception as error:
             traceback.print_exc()
             self.report({'ERROR'}, str(error))

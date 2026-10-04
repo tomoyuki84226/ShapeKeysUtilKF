@@ -10,6 +10,7 @@
 """Build temporary, modifier-evaluated meshes for the stock FBX exporter."""
 
 from array import array
+from contextlib import nullcontext
 
 import bpy
 
@@ -176,13 +177,85 @@ def build_evaluated_mesh(source_obj, depsgraph, apply_modifiers=True, use_subsur
         depsgraph.update()
 
 
-def export_with_temporary_meshes(context, mesh_objects, export_keywords):
+def _parented_mesh_groups(mesh_objects):
+    """Return exported mesh hierarchies keyed by their highest mesh parent."""
+    mesh_objects = list(mesh_objects)
+    exported_meshes = set(mesh_objects)
+    groups = {}
+
+    for mesh_object in mesh_objects:
+        root = mesh_object
+        while root.parent in exported_meshes:
+            root = root.parent
+        groups.setdefault(root, []).append(mesh_object)
+
+    return [
+        [root] + [member for member in members if member != root]
+        for root, members in groups.items()
+        if len(members) > 1
+    ]
+
+
+def _join_temporary_objects(context, mesh_objects):
+    """Join copies of evaluated mesh objects and return the resulting mesh."""
+    temporary_collection = bpy.data.collections.new("__SKU_FBX_MERGE__")
+    context.scene.collection.children.link(temporary_collection)
+    copies = []
+    copy_names = []
+    copied_meshes = []
+
+    try:
+        for source_obj in mesh_objects:
+            object_copy = source_obj.copy()
+            mesh_copy = source_obj.data.copy()
+            object_copy.data = mesh_copy
+            object_copy.animation_data_clear()
+            object_copy.modifiers.clear()
+            temporary_collection.objects.link(object_copy)
+            object_copy.matrix_world = source_obj.matrix_world
+            copies.append(object_copy)
+            copy_names.append(object_copy.name)
+            copied_meshes.append(mesh_copy)
+
+        active_copy = copies[0]
+        override = {
+            "active_object": active_copy,
+            "object": active_copy,
+            "selected_objects": copies,
+            "selected_editable_objects": copies,
+        }
+        with context.temp_override(**override):
+            result = bpy.ops.object.join()
+        if 'FINISHED' not in result:
+            raise RuntimeError(f"Could not merge mesh hierarchy rooted at {mesh_objects[0].name}")
+
+        merged_mesh = active_copy.data
+        merged_mesh.name = f"{mesh_objects[0].data.name}__SKU_FBX_MERGED__"
+        return merged_mesh
+    except Exception:
+        merged_mesh = None
+        raise
+    finally:
+        for object_name in copy_names:
+            object_copy = bpy.data.objects.get(object_name)
+            if object_copy is not None:
+                bpy.data.objects.remove(object_copy, do_unlink=True)
+        for mesh_copy in copied_meshes:
+            if mesh_copy != merged_mesh and mesh_copy.users == 0:
+                bpy.data.meshes.remove(mesh_copy)
+        bpy.data.collections.remove(temporary_collection)
+
+
+def export_with_temporary_meshes(
+        context, mesh_objects, export_keywords, export_objects=None):
     """Swap evaluated meshes in only for the duration of stock FBX export."""
     depsgraph = context.evaluated_depsgraph_get()
     prepared = []
+    merged = []
     stock_keywords = export_keywords.copy()
     apply_modifiers = stock_keywords.pop("use_mesh_modifiers", True)
     stock_keywords.pop("use_mesh_modifiers_render", None)
+    merge_parented_meshes = stock_keywords.pop("merge_parented_meshes", False)
     use_subsurf = stock_keywords.get("use_subsurf", False)
 
     try:
@@ -200,16 +273,44 @@ def export_with_temporary_meshes(context, mesh_objects, export_keywords):
         for source_obj, _original_mesh, temporary_mesh in prepared:
             source_obj.data = temporary_mesh
 
-        result = bpy.ops.export_scene.fbx(
-            **stock_keywords,
-            use_mesh_modifiers=False,
-        )
+        excluded_objects = set()
+        if merge_parented_meshes:
+            for mesh_group in _parented_mesh_groups(mesh_objects):
+                root_object = mesh_group[0]
+                merged_mesh = _join_temporary_objects(context, mesh_group)
+                root_object.data = merged_mesh
+                merged.append((root_object, merged_mesh))
+                excluded_objects.update(mesh_group[1:])
+
+        export_context = nullcontext()
+        if merge_parented_meshes and export_objects is not None:
+            selected_objects = [
+                obj for obj in export_objects
+                if obj not in excluded_objects
+            ]
+            stock_keywords["use_selection"] = True
+            # ``source_collection + use_selection`` makes the stock exporter
+            # read each object's real selection flag instead of the overridden
+            # selected_objects context. The caller already resolved the exact
+            # source collection, so export that resolved list directly.
+            stock_keywords["use_active_collection"] = False
+            stock_keywords["collection"] = ""
+            export_context = context.temp_override(selected_objects=selected_objects)
+
+        with export_context:
+            result = bpy.ops.export_scene.fbx(
+                **stock_keywords,
+                use_mesh_modifiers=False,
+            )
         if 'FINISHED' not in result:
             raise RuntimeError("The standard FBX exporter did not finish")
         return result
     finally:
         for source_obj, original_mesh, _temporary_mesh in reversed(prepared):
             source_obj.data = original_mesh
+        for _root_object, merged_mesh in merged:
+            if merged_mesh.users == 0:
+                bpy.data.meshes.remove(merged_mesh)
         for _source_obj, _original_mesh, temporary_mesh in prepared:
             if temporary_mesh.users == 0:
                 bpy.data.meshes.remove(temporary_mesh)

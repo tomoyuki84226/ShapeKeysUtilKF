@@ -36,6 +36,8 @@ Like Blender's standard FBX exporter, this exports every object in the current V
 
 The export screen uses the same panels and settings as Blender's standard FBX exporter. Batch Mode is currently unsupported.
 
+Enable `子のメッシュを親と統合` (Merge Child Meshes into Parent) below Transform to temporarily join exported child meshes into their highest exported mesh parent. The original objects, hierarchy, and mesh data remain unchanged.
+
 The evaluated Basis and every shape key must have the same vertex count. Modifiers such as Boolean or merged Mirror may cause the export to stop with an error.
 
 ### Apply Modifiers

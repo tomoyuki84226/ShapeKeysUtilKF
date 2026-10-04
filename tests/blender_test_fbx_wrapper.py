@@ -44,6 +44,7 @@ def main():
     all_objects_target = bpy.context.object
     all_objects_target.name = "AllObjectsTarget"
     all_objects_target.modifiers.new(name="Solidify", type='SOLIDIFY').thickness = 0.1
+    all_objects_target.parent = source_obj
     all_objects_target.select_set(False)
     source_obj.select_set(True)
     bpy.context.view_layer.objects.active = source_obj
@@ -55,6 +56,11 @@ def main():
     bpy.context.view_layer.objects.active = source_obj
     original_mesh = source_obj.data
     original_active_index = source_obj.active_shape_key_index
+
+    merge_groups = func_export_fbx_wrapper._parented_mesh_groups(
+        [all_objects_target, source_obj]
+    )
+    assert merge_groups == [[source_obj, all_objects_target]]
 
     depsgraph = bpy.context.evaluated_depsgraph_get()
     control_mesh = func_export_fbx_wrapper.build_evaluated_mesh(
@@ -101,12 +107,30 @@ def main():
     assert len(source_obj.data.vertices) == 8
     assert len(source_obj.data.shape_keys.key_blocks) == 2
 
+    merged_output_path = os.path.join(PROJECT_ROOT, "tests", "wrapper_merged_test.fbx")
+    result = bpy.ops.export_scene.shapekeys_util_fbx(
+        filepath=merged_output_path,
+        bake_anim=False,
+        add_leaf_bones=False,
+        merge_parented_meshes=True,
+    )
+    assert result == {'FINISHED'}
+    assert os.path.isfile(merged_output_path)
+    assert source_obj.data == original_mesh
+    assert all_objects_target.parent == source_obj
+    assert len(bpy.data.objects) == 2
+
     mesh_count = len(bpy.data.meshes)
     try:
         func_export_fbx_wrapper.export_with_temporary_meshes(
             bpy.context,
-            [source_obj],
-            {"filepath": output_path, "not_a_real_fbx_option": True},
+            [source_obj, all_objects_target],
+            {
+                "filepath": output_path,
+                "merge_parented_meshes": True,
+                "not_a_real_fbx_option": True,
+            },
+            export_objects=[source_obj, all_objects_target],
         )
     except TypeError:
         pass
@@ -114,6 +138,7 @@ def main():
         raise AssertionError("Expected the stock FBX exporter to reject an invalid option")
     assert source_obj.data == original_mesh
     assert len(bpy.data.meshes) == mesh_count
+    assert len(bpy.data.objects) == 2
 
     source_obj.modifiers.clear()
     copied_mesh = func_export_fbx_wrapper.build_evaluated_mesh(source_obj, depsgraph)
@@ -137,10 +162,22 @@ def main():
     assert list(imported.data.shape_keys.key_blocks.keys()) == ["Basis", "Smile"]
     imported_basis = imported.data.shape_keys.key_blocks["Basis"]
     imported_smile = imported.data.shape_keys.key_blocks["Smile"]
+    imported_vertex_count = len(imported.data.vertices)
     assert any(
         (shape_vertex.co - basis_vertex.co).length > 0.001
         for basis_vertex, shape_vertex in zip(imported_basis.data, imported_smile.data)
     )
+
+    bpy.ops.object.select_all(action='SELECT')
+    bpy.ops.object.delete()
+    bpy.ops.import_scene.fbx(filepath=merged_output_path)
+    merged_imported_meshes = [obj for obj in bpy.context.selected_objects if obj.type == 'MESH']
+    assert len(merged_imported_meshes) == 1
+    merged_imported = merged_imported_meshes[0]
+    assert merged_imported.name == "EvaluatedShapeKeysTest"
+    assert len(merged_imported.data.vertices) > imported_vertex_count
+    assert merged_imported.data.shape_keys is not None
+    assert list(merged_imported.data.shape_keys.key_blocks.keys()) == ["Basis", "Smile"]
     print("ShapeKeysUtilKF FBX wrapper test passed")
 
 
