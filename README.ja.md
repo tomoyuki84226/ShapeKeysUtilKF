@@ -94,21 +94,6 @@ Mirrorモディファイアが原因だと思われる場合、以下の対処�
 　　Apply Modifiers有効時にチェックを入れると、レンダリング無効化状態のモディファイアを削除します。
 　　（レンダリング無効化 ＝ モディファイア一覧でカメラアイコンが押されていないもの）
 
-### Copy Shapekeys
-`オブジェクトモードで右クリック → ShapeKeys Util → Copy Shapekeys`  
-
-アクティブオブジェクトの形状を他の選択オブジェクトにbpy.ops.object.join_shapes()でコピーします。  
-
-### Side of Active from Point
-`編集モードで右クリック → ShapeKeys Util → Side of Active from Point`  
-
-アドオン製作時の副産物として生まれた機能です。  
-指定座標を基準にSide of Activeを行います。
-
-- 設定
-    - Point
-　　基準となる座標です。
-
 ### Blend Active Shape Key to All
 `編集モードで右クリック → ShapeKeys Util → 選択中のシェイプキーを全てにブレンド`
 

@@ -104,24 +104,6 @@ All selected mesh objects can be processed in one operation; objects without sha
     When enabled together with **Apply Modifiers**, modifiers that are disabled for rendering are removed.  
     (Disabled for rendering means that the camera icon is turned off in the modifier list.)
 
-### Copy Shapekeys
-
-`Right-click in Object Mode → ShapeKeys Util → Copy Shapekeys`
-
-Copies the active object's shape to the other selected objects using `bpy.ops.object.join_shapes()`.
-
-### Side of Active from Point
-
-`Right-click in Edit Mode → ShapeKeys Util → Side of Active from Point`
-
-This feature was created as a by-product of developing the add-on.  
-It runs **Side of Active** using the specified coordinates as the reference point.
-
-- Settings
-
-  - **Point**  
-    The coordinates used as the reference point.
-
 ### Blend Active Shape Key to All
 
 `Right-click in Edit Mode → ShapeKeys Util → Blend Active Shape Key to All`
